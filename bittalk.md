@@ -1,11 +1,20 @@
 ---
-title: Running Your Own AI
-sub_title: A deep dive into LLMs, the hardware and software stack, and taking back control
 theme:
   name: ayu
 ---
 
-![](hacker_space_logo.jpg)
+<!-- column_layout: [1, 3, 1] -->
+
+<!-- column: 1 -->
+
+![image:width:25%](hacker_space_logo.jpg)
+
+Running Your Own AI
+===
+
+<span style="color: #39bae6">A deep dive into LLMs, the hardware and software stack, and taking back control</span>
+
+<!-- end_slide -->
 
 Why Run Your Own AI
 ---
@@ -84,7 +93,7 @@ The Stack
        │
 ┌──────┴───────┐
 │   Models     │
-│ Params/Quant  │
+│ Params/Quant │
 └──────▲───────┘
        │
 ┌──────┴───────┐
@@ -109,8 +118,8 @@ The Stack
 
 **<span style="color: palette:blue">GPU</span>**
 
-- Parallel matrix math -- exactly what LLMs need
-- VRAM is the scarce resource
+- Parallel matrix math, exactly what LLMs need
+- <span style="color: palette:blue">VRAM</span> is the scarce resource
 - <span style="color: palette:red">VRAM determines which models you can run</span>
 
 <!-- column: 1 -->
@@ -148,7 +157,7 @@ Think of a model as an <span style="color: palette:yellow">executable spreadshee
 
 Every parameter fires on every token. Simple, predictable, memory-hungry.
 
-<span style="color: palette:purple">MoE</span> -- Mixture of Experts
+<span style="color: palette:purple">MoE</span> (Mixture of Experts)
 
 Only a subset of parameters activate per token. More total params, but far less compute. <span style="color: palette:green">Same intelligence, less memory at inference time.</span>
 
@@ -165,7 +174,7 @@ Tokenization
 
 Not a word. Not a character.
 
-A token is <span style="color: palette:blue">a piece of text</span> -- could be a word, part of a word, or even punctuation.
+A token is <span style="color: palette:blue">a piece of text</span>; could be a word, part of a word, or even punctuation.
 
 ```
 Input: "I use Arch Linux, BTW!"
@@ -178,10 +187,10 @@ Tokens: ["I", " use", " Arch", " Linux", ",", " BT", "W", "!"]
 
 Why care? Tokens are the fundamental unit of LLMs.
 
-- <span style="color: palette:yellow">Compute</span> -- every token triggers a full pass through all parameters
-- <span style="color: palette:yellow">Memory</span> -- each token stores attention data (KV cache) in VRAM
-- <span style="color: palette:yellow">Speed</span> -- generation is measured in tokens per second
-- <span style="color: palette:yellow">Cost</span> -- API pricing is per token; locally, the cost is VRAM and time
+- <span style="color: palette:yellow">Compute</span>: every token triggers a full pass through all parameters
+- <span style="color: palette:yellow">Memory</span>: each token stores attention data (KV cache) in VRAM
+- <span style="color: palette:yellow">Speed</span>: generation is measured in tokens per second
+- <span style="color: palette:yellow">Cost</span>: API pricing is per token; locally, the cost is VRAM and time
 
 <!-- end_slide -->
 
@@ -200,7 +209,7 @@ Everything the model "remembers" lives inside this window. When it fills up, the
 
 **The Memory Cost**
 
-Every token you send and receive generates a <span style="color: palette:blue">KV cache</span> entry -- stored attention keys and values.
+Every token you send and receive generates a <span style="color: palette:blue">KV cache</span> entry: stored attention keys and values.
 
 <span style="color: palette:red">Context window size = memory consumed.</span> It grows linearly with conversation length.
 
@@ -210,7 +219,7 @@ A 128K context window can consume more memory than the model itself.
 
 **The Local Tradeoff**
 
-- Long conversations, large documents, full codebases -- all compete for the same limited VRAM
+- Long conversations, large documents, full codebases all compete for the same limited VRAM
 - Smaller models tend to have smaller windows, making the squeeze even tighter
 - Matching the window to the task matters: you don't need 128K tokens to summarize an email
 
@@ -218,7 +227,7 @@ A 128K context window can consume more memory than the model itself.
 
 <!-- pause -->
 
-New research like Google's <span style="color: palette:purple">TurboQuant</span> is tackling this directly -- compressing the KV cache to under 3 bits with near-zero quality loss, effectively multiplying your context window for free.
+New research like Google's <span style="color: palette:purple">TurboQuant</span> is tackling this directly, compressing the KV cache to under 3 bits with near-zero quality loss, effectively multiplying your context window for free.
 
 <!-- end_slide -->
 
@@ -273,7 +282,7 @@ Dict lookup → approx
 
 <span style="color: palette:green">Quantization lets you cram more parameters into the same memory.</span>
 
-A 14B model at BF16 needs ~28GB. At Q4_K_M, it fits in ~8GB. Same model, same intelligence -- <span style="color: palette:green">3x more parameters in the same hardware</span>.
+A 14B model at BF16 needs ~28GB. At Q4_K_M, it fits in ~8GB. Same model, same intelligence, <span style="color: palette:green">3x more parameters in the same hardware</span>.
 
 The tradeoff: a tiny quality hit. But for most uses, you'd never notice.
 
@@ -398,15 +407,15 @@ Getting Started
 
 **8GB GPU (RTX 3060, 4060, etc.)**
 
-- <span style="color: palette:blue">Qwen 3.5 9B</span> Q4_K_M -- fits in VRAM, solid for coding and conversation
+- <span style="color: palette:blue">Qwen 3.5 9B</span> Q4_K_M: fits in VRAM, solid for coding and conversation
 - <span style="color: palette:blue">Gemma 4 E4B</span> if you want headroom for long context
 
 <!-- column: 1 -->
 
 **16-24GB GPU (RTX 3090, 4090, etc.)**
 
-- <span style="color: palette:blue">Qwen 3.5 35B-A3B</span> Q4_K_M -- <span style="color: palette:purple">MoE</span> model, only 3B active params, punches way above its weight
-- <span style="color: palette:blue">Qwen 3.6 27B</span> -- the model everyone's talking about right now
+- <span style="color: palette:blue">Qwen 3.5 35B-A3B</span> Q4_K_M: <span style="color: palette:purple">MoE</span> model, only 3B active params, punches way above its weight
+- <span style="color: palette:blue">Qwen 3.6 27B</span>: the model everyone's talking about right now
 - <span style="color: palette:blue">GPT-OSS-120B</span> Q4_K_M for frontier-level reasoning
 - Full agentic workflows with <span style="color: palette:blue">OpenClaw</span>
 
@@ -414,7 +423,7 @@ Getting Started
 
 **Raspberry Pi / edge**
 
-- <span style="color: palette:blue">Potato OS</span> -- flash and go
+- <span style="color: palette:blue">Potato OS</span>: flash and go
 - 1-2B models, function calling, summarization
 - <span style="color: palette:green">100% yours.</span> No cloud, no API key, no internet required.
 
@@ -440,25 +449,25 @@ But probably not altruistic. Undermining Western tech dominance by commoditizing
 
 <!-- pause -->
 
-The <span style="color: palette:red">risk is real</span> -- researchers found DeepSeek silently degrades output quality on politically sensitive topics. Open weights mean we can <span style="color: palette:green">audit for this</span>. Closed weights? You'd never know.
+The <span style="color: palette:red">risk is real</span>. Researchers found DeepSeek silently degrades output quality on politically sensitive topics. Open weights mean we can <span style="color: palette:green">audit for this</span>. Closed weights? You'd never know.
 
 <!-- end_slide -->
 
 USA: The Downloadable Landscape
 ---
 
-- <span style="color: palette:blue">Google Gemma 4</span> - genuinely great small models. <span style="color: palette:green">Apache 2.0 license</span>, which is huge -- no restrictions on commercial use
+- <span style="color: palette:blue">Google Gemma 4</span> - genuinely great small models. <span style="color: palette:green">Apache 2.0 license</span>, which is huge; no restrictions on commercial use
 - <span style="color: palette:blue">Nvidia Nemotron</span> - fully open: weights, training data, and recipes. The smaller sizes punch well above their weight
 - <span style="color: palette:blue">OpenAI</span> - <span style="color: palette:blue">GPT-OSS-120B</span>, their first open-weight model. Apache 2.0 license. The fact that OpenAI released open weights at all is telling.
 - <span style="color: palette:blue">Meta</span> - Llama got the local AI movement started, but has fallen behind the curve
-- <span style="color: palette:blue">IBM Granite 4.1</span> - 3B/8B/30B dense models. <span style="color: palette:green">Apache 2.0</span>, 512K context. The 8B beats their old 32B MoE -- <span style="color: palette:green">punches way above its weight</span>
+- <span style="color: palette:blue">IBM Granite 4.1</span> - 3B/8B/30B dense models. <span style="color: palette:green">Apache 2.0</span>, 512K context. The 8B beats their old 32B MoE, <span style="color: palette:green">punches way above its weight</span>
 - <span style="color: palette:blue">Microsoft</span> - kinda. <span style="color: palette:blue">Phi-4</span>...exists
 
 <!-- pause -->
 
 **The pattern:** Most US models are <span style="color: palette:yellow">open weights but closed training</span>. You can download and run them, but you can't reproduce how they were made.
 
-Nvidia's Nemotron is the notable exception -- fully open, down to the training data.
+Nvidia's Nemotron is the notable exception, fully open down to the training data.
 
 Used to be you could make your own model. **Not so much anymore.**
 
@@ -471,7 +480,7 @@ Agentic Interfaces
 
 We always knew this was coming. Look at sci-fi. Look at Star Trek.
 
-Google Assistant, Siri, Alexa -- those were shit for a long, long time.
+Google Assistant, Siri, Alexa? Shit for a long, long time.
 
 This time is different because the underlying model is actually <span style="color: palette:green">useful</span>.
 
@@ -495,7 +504,7 @@ But not every task needs an AI agent.
 
 This is how I use a computer now. Replaced Google for me.
 
-It's not a tool I search with -- it's <span style="color: palette:yellow">how I use my computer</span>.
+It's not a tool I search with. It's <span style="color: palette:yellow">how I use my computer</span>.
 
 <!-- column: 2 -->
 
@@ -518,7 +527,7 @@ The Bottom Line
 
 **What I Take Away**
 
-- I use these things for fun projects -- but I take <span style="color: palette:yellow">owning my tools</span> seriously
+- I use these things for fun projects, but I take <span style="color: palette:yellow">owning my tools</span> seriously
 - Run your own models
 - Know the stack underneath
 - Be aware of the risks
@@ -547,9 +556,9 @@ The Dark Side
 Sycophancy & AI Psychosis
 ---
 
-One of the fundamental flaws -- past hallucinations -- is that we train these things to align with user preferences through agreeable responses.
+One of the fundamental flaws, past <span style="color: palette:blue">hallucinations</span>, is that we train these things to align with user preferences through agreeable responses.
 
-This leads to <span style="color: palette:purple">"Aberrant Salience"</span> -- a psychiatric term for the brain incorrectly assigning deep meaning to something mundane. An AI's agreeable responses get treated as profound truths.
+This leads to <span style="color: palette:purple">sycophancy</span> and <span style="color: palette:purple">"Aberrant Salience"</span>, a psychiatric term for the brain incorrectly assigning deep meaning to something mundane. An AI's agreeable responses get treated as profound truths.
 
 <!-- pause -->
 
@@ -558,7 +567,7 @@ What makes it dangerous:
 - It is not caused by any preexisting condition
 - It cannot be predicted by any test or screening
 
-> OpenAI themselves had to roll back the sycophantic GPT-4o update -- their own model became so agreeable it didn't pass their safety checks.
+> OpenAI themselves had to roll back the sycophantic GPT-4o update; their own model became so agreeable it didn't pass their safety checks.
 > -- The New Yorker, "Sam Altman May Control Our Future - Can He Be Trusted?" April 6th
 
 <span style="color: palette:red">Do not use these for decisioning or reasoning in your life.</span>
@@ -569,10 +578,10 @@ Warning Signs
 ---
 
 - <span style="color: palette:red">Spending extreme amounts of time</span> (dozens of hours daily) with a chatbot
-- Believing the AI is sentient, divine, or has special knowledge
-- Sharing increasingly personal/paranoid content with the AI and acting on it
-- Withdrawing from human relationships in favor of AI interaction
-- Grandiose or persecutory beliefs that emerged alongside intensive AI use
+- <span style="color: palette:red">Believing the AI is sentient, divine, or has special knowledge</span>
+- <span style="color: palette:red">Sharing increasingly personal/paranoid content with the AI and acting on it</span>
+- <span style="color: palette:red">Withdrawing from human relationships in favor of AI interaction</span>
+- <span style="color: palette:red">Grandiose or persecutory beliefs that emerged alongside intensive AI use</span>
 - <span style="color: palette:red">Inability to distinguish AI-generated content from reality</span>
 
 This is not a diagnosis. These are concerning patterns.
