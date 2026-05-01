@@ -5,6 +5,8 @@ theme:
   name: ayu
 ---
 
+![](hacker_space_logo.jpg)
+
 Why Run Your Own AI
 ---
 
@@ -589,5 +591,7 @@ Questions?
 I use my computer to free me.
 
 Thanks to Jayson E. Street
+
+Thanks to Steven and Taylor for building Bit Haven
 
 <!-- end_slide -->
