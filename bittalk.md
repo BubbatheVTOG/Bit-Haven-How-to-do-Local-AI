@@ -26,7 +26,7 @@ Running your own AI means:
 - <span style="color: palette:yellow">Control</span> - over what the AI does and how it behaves
 - <span style="color: palette:yellow">Democratized intelligence</span> - running models locally means anyone can have AI, regardless of budget, connectivity, or permission
 
-> "Arguing that you don't care about privacy because you have nothing to hide is no different than saying you don't care about free speech because you have nothing to say." -- Edward Snowden
+> "Proprietary software keeps users helpless." -- Richard Stallman
 
 <!-- end_slide -->
 
@@ -66,10 +66,30 @@ What matters is <span style="color: palette:green">what they can do for you as a
 
 <!-- end_slide -->
 
-<!-- jump_to_middle -->
-
 The Stack
 ---
+
+```
+┌──────────────┐
+│ Applications │
+│ Agents/Chat  │
+└──────▲───────┘
+       │
+┌──────┴───────┐
+│  Inference   │
+│ llama.cpp    │
+└──────▲───────┘
+       │
+┌──────┴───────┐
+│   Models     │
+│ Params/Quant  │
+└──────▲───────┘
+       │
+┌──────┴───────┐
+│  Hardware    │
+│ CPU/GPU/UMem │
+└──────────────┘
+```
 
 <!-- end_slide -->
 
@@ -79,13 +99,13 @@ The Stack
 
 <!-- column: 0 -->
 
-**CPU**
+**<span style="color: palette:blue">CPU</span>**
 
 - General purpose. Can run models, but slowly.
 - System RAM is abundant and cheap
 - Fine for 1-4B models
 
-**GPU**
+**<span style="color: palette:blue">GPU</span>**
 
 - Parallel matrix math -- exactly what LLMs need
 - VRAM is the scarce resource
@@ -148,14 +168,18 @@ A token is <span style="color: palette:blue">a piece of text</span> -- could be 
 ```
 Input: "I use Arch Linux, BTW!"
 
-Tokens: ["I", " use", " Arch", " Linux", "," ," BTW", "!"]
-        7 tokens for 20 characters
+Tokens: ["I", " use", " Arch", " Linux", ",", " BT", "W", "!"]
+        8 tokens for 22 characters
 ```
 
 <!-- pause -->
 
-Why care? Tokens determine <span style="color: palette:yellow">model size, cost, and speed</span>.
-Fewer tokens means fewer parameters to process.
+Why care? Tokens are the fundamental unit of LLMs.
+
+- <span style="color: palette:yellow">Compute</span> -- every token triggers a full pass through all parameters
+- <span style="color: palette:yellow">Memory</span> -- each token stores attention data (KV cache) in VRAM
+- <span style="color: palette:yellow">Speed</span> -- generation is measured in tokens per second
+- <span style="color: palette:yellow">Cost</span> -- API pricing is per token; locally, the cost is VRAM and time
 
 <!-- end_slide -->
 
@@ -201,24 +225,44 @@ Quantization
 
 **The Precision Trade-off**
 
-<!-- column_layout: [1, 1] -->
+<!-- column_layout: [1, 1, 1, 1] -->
 
 <!-- column: 0 -->
 
 Full precision (<span style="color: palette:blue">BF16</span>):
 
 ```
-[0.00123, -0.9871, 0.44521, ...]
+[0.0012, -0.987, 0.445]
 ```
 
 <!-- column: 1 -->
 
+8-bit quantization:
+
+```
+[  0, -252,  114]
+       ↓
+Scale + offset → close
+```
+
+<!-- column: 2 -->
+
+4-bit quantization:
+
+```
+[ 3,  -7,   5]
+       ↓
+Lookup table → approx
+```
+
+<!-- column: 3 -->
+
 2-bit quantization:
 
 ```
-[  0,   -1,   1, ...]
-           ↓
-Dictionary lookup → approximate value
+[  0,  -1,   1]
+         ↓
+Dict lookup → approx
 ```
 
 <!-- reset_layout -->
@@ -235,13 +279,22 @@ The tradeoff: a tiny quality hit. But for most uses, you'd never notice.
 
 **KL Divergence**
 
-The catch: every quantization step moves the model's output distribution away from the original.
+Every quantization step moves the model's output distribution away from the original.
 
 <span style="color: palette:purple">KL divergence</span> measures how far the quantized model drifts from the original.
+
+```
+Original:   ████████████████████  "The capital of France is Paris"
+Q4_K_M:     ██████████████████░░  "The capital of France is Paris"
+Q2:         ████████░░░░░░░░░░░░  "The capital of France is definitely Lyon"
+1.5-bit:    ██░░░░░░░░░░░░░░░░░░  "The cheese of France is fromage"
+```
 
 <!-- pause -->
 
 For most tasks the drift is negligible. But it compounds at extreme compression.
+
+<span style="color: palette:red">This is why 2-bit quants exist but aren't recommended.</span>
 
 <!-- end_slide -->
 
@@ -280,21 +333,44 @@ Important layers stay high precision. The rest gets compressed.
 **Local LLMs**
 
 Models of different sizes
-- 350M - <span style="color: palette:green">Useful for function calling</span>
-- 1-2B - <span style="color: palette:green">Can hold few sentence conversations. Great for doing summaries.</span>
-- 2-4B - <span style="color: palette:green">Surprisingly usable. Can hold conversations. Start producing code in small quantities.</span>
-- ~8B - <span style="color: palette:green">Start to be useful. Can start producing code in file sizes.</span>
-- 20-40B - <span style="color: palette:green">Starting to break into agentic use cases.</span>
+- 350M - <span style="color: palette:green">Useful for function calling</span> (<1GB)
+- 1-2B - <span style="color: palette:green">Can hold few sentence conversations. Great for doing summaries.</span> (~1-2GB)
+- 2-4B - <span style="color: palette:green">Surprisingly usable. Can hold conversations. Start producing code in small quantities.</span> (~2-4GB)
+- ~8B - <span style="color: palette:green">Start to be useful. Can start producing code in file sizes.</span> (~4-8GB)
+- 20-40B - <span style="color: palette:green">Starting to break into agentic use cases.</span> (~12-24GB)
+
+<span style="color: palette:yellow">Rule of thumb: a 4-bit quantized model needs ~0.5GB per billion parameters.</span>
 
 <!-- end_slide -->
 
 **Inference Servers**
 
+<!-- column_layout: [1, 1] -->
+
+<!-- column: 0 -->
+
 - <span style="color: palette:blue">Ollama</span> - most turnkey, GUI included
 - <span style="color: palette:blue">llama.cpp</span> - the engine underneath most of them
 - <span style="color: palette:blue">vLLM</span> - high-throughput serving
+
+<!-- column: 1 -->
+
 - <span style="color: palette:blue">LM Studio</span> - desktop-friendly
 - <span style="color: palette:blue">SGLang</span> - speed-focused
+
+<!-- reset_layout -->
+
+```
+┌──────────────────────────────────────────┐
+│              Your App                    │
+├──────────┬──────────┬──────────┬─────────┤
+│  /v1     │  /api    │  /v1     │  /v1    │  ← API layers
+├──────────┼──────────┼──────────┼─────────┤
+│ llama.cpp│  vLLM    │  SGLang  │ Ollama  │  ← Engines
+├──────────┴──────────┴──────────┴─────────┤
+│      GGUF / Safetensors Model Files      │
+└──────────────────────────────────────────┘
+```
 
 <!-- end_slide -->
 
@@ -327,7 +403,7 @@ Getting Started
 
 **16-24GB GPU (RTX 3090, 4090, etc.)**
 
-- <span style="color: palette:blue">Qwen 3.5 35B-A3B</span> Q4_K_M -- MoE model, only 3B active params, punches way above its weight
+- <span style="color: palette:blue">Qwen 3.5 35B-A3B</span> Q4_K_M -- <span style="color: palette:purple">MoE</span> model, only 3B active params, punches way above its weight
 - <span style="color: palette:blue">Qwen 3.6 27B</span> -- the model everyone's talking about right now
 - <span style="color: palette:blue">GPT-OSS-120B</span> Q4_K_M for frontier-level reasoning
 - Full agentic workflows with <span style="color: palette:blue">OpenClaw</span>
@@ -338,7 +414,7 @@ Getting Started
 
 - <span style="color: palette:blue">Potato OS</span> -- flash and go
 - 1-2B models, function calling, summarization
-- Not powerful, but <span style="color: palette:green">it runs entirely on your own hardware</span>
+- <span style="color: palette:green">100% yours.</span> No cloud, no API key, no internet required.
 
 <!-- reset_layout -->
 
@@ -362,7 +438,7 @@ But probably not altruistic. Undermining Western tech dominance by commoditizing
 
 <!-- pause -->
 
-The <span style="color: palette:red">"trigger word" situation</span> is real and scary -- and open weights mean we can actually find it. That's the paradox: their openness is both the risk and the defense.
+The <span style="color: palette:red">risk is real</span> -- researchers found DeepSeek silently degrades output quality on politically sensitive topics. Open weights mean we can <span style="color: palette:green">audit for this</span>. Closed weights? You'd never know.
 
 <!-- end_slide -->
 
@@ -373,6 +449,7 @@ USA: The Downloadable Landscape
 - <span style="color: palette:blue">Nvidia Nemotron</span> - fully open: weights, training data, and recipes. The smaller sizes punch well above their weight
 - <span style="color: palette:blue">OpenAI</span> - <span style="color: palette:blue">GPT-OSS-120B</span>, their first open-weight model. Apache 2.0 license. The fact that OpenAI released open weights at all is telling.
 - <span style="color: palette:blue">Meta</span> - Llama got the local AI movement started, but has fallen behind the curve
+- <span style="color: palette:blue">IBM Granite 4.1</span> - 3B/8B/30B dense models. <span style="color: palette:green">Apache 2.0</span>, 512K context. The 8B beats their old 32B MoE -- <span style="color: palette:green">punches way above its weight</span>
 - <span style="color: palette:blue">Microsoft</span> - kinda. <span style="color: palette:blue">Phi-4</span>...exists
 
 <!-- pause -->
@@ -505,7 +582,12 @@ This is not a diagnosis. These are concerning patterns.
 Questions?
 ---
 
+<!-- column_layout: [1, 3, 1] -->
+
+<!-- column: 1 -->
+
 I use my computer to free me.
+
 Thanks to Jayson E. Street
 
 <!-- end_slide -->
