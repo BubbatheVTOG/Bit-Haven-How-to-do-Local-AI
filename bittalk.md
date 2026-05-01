@@ -506,6 +506,6 @@ Questions?
 ---
 
 I use my computer to free me.
-Thanks to Jason E Street
+Thanks to Jayson E. Street
 
 <!-- end_slide -->
